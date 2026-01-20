@@ -1,6 +1,5 @@
 
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using BroMakerLib;
@@ -14,14 +13,12 @@ namespace Cobro
     public class Cobro : CustomHero
 
     {
-        private Projectile[] projectiles;       
         private Projectile primaryProjectile;       
         private Projectile specialProjectile;
         private Material normalMaterial;
         private Material stealthMaterial;
         private Material normalGunMaterial;
         private Material stealthGunMaterial;
-        private Material normalAvatarMaterial
         private float primaryAttackRange = 20f;
         private float primaryAttackSpeed = 480f;
         private float primaryProjectileLifetime = 0.19f;
@@ -62,7 +59,6 @@ namespace Cobro
             this.gunSpriteHangingFrame = 9;
             this.coorscanPrefab = new GameObject("CoorsCan", new Type[]
             {
-                typeof(Transform),
                 typeof(MeshFilter),
                 typeof(MeshRenderer),
                 typeof(SpriteSM),
@@ -78,18 +74,7 @@ namespace Cobro
             this.stealthMaterial = ResourcesController.GetMaterial(directoryName, "spriteSpecial.png");
             this.normalGunMaterial = this.gunSprite.meshRender.material;
             this.stealthGunMaterial = ResourcesController.GetMaterial(directoryName, "gunSpriteSpecial.png");
-            this.normalAvatarMaterial = ResourcesController.GetMaterial(directoryName, "avatar.png");
-        }
-
-        public static void PreloadSprites(string directoryPath, List<string> spriteNames)
-        {
-            foreach (string path in spriteNames)
-            {
-                if (File.Exists(Path.Combine(directoryPath, path)))
-                {
-                    ResourcesController.GetMaterial(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "CoorsCan.png");
-                }
-            }
+            ResourcesController.GetMaterial(directoryName, "avatar.png");
         }
 
         private void InitializeAudioClips()
@@ -155,8 +140,8 @@ namespace Cobro
 
         private void InitializeProjectiles()
         {
-            this.primaryProjectile = (HeroController.GetHeroPrefab(0) as Rambro).projectile;
-            this.specialProjectile = (HeroController.GetHeroPrefab(13) as IndianaBrones).projectile;
+            this.primaryProjectile = (HeroController.GetHeroPrefab((HeroType)0) as Rambro).projectile;
+            this.specialProjectile = (HeroController.GetHeroPrefab((HeroType)13) as IndianaBrones).projectile;
             this.specialProjectileData = new Cobro.ProjectileData
             {
                 bulletCount = 0,
@@ -212,10 +197,10 @@ namespace Cobro
                     num4 = 8.5f;
                 }
                 float num5 = base.transform.localScale.x * this.primaryAttackSpeed;
-                float num6 = (float)Random.Range(-15, 15);
+                float num6 = (float)UnityEngine.Random.Range(-15, 15);
                 this.gunFrame = 3;
                 this.SetGunSprite(this.gunFrame, 0);
-                ProjectileController.SpawnProjectileLocally(this.primaryProjectile, this, base.X + num, base.Y + num2, num5, num6 - 10f + Random.value * 35f, base.playerNum).life = this.primaryProjectileLifetime;
+                ProjectileController.SpawnProjectileLocally(this.primaryProjectile, this, base.X + num, base.Y + num2, num5, num6 - 10f + UnityEngine.Random.value * 35f, base.playerNum).life = this.primaryProjectileLifetime;
                 Map.DisturbWildLife(base.X, base.Y, 60f, base.playerNum);
                 float num7 = base.X + num3;
                 float num8 = base.Y + num4;
@@ -391,7 +376,7 @@ namespace Cobro
                 float num = (base.transform.localScale.x > 0f) ? 15f : -15f;
                 float num2 = 8.3f;
                 float num3 = base.transform.localScale.x * 750f;
-                float num4 = (float)Random.Range(-5, 5);
+                float num4 = (float)UnityEngine.Random.Range(-5, 5);
                 this.gunFrame = 3;
                 this.SetGunSprite(this.gunFrame, 0);
                 float num5 = base.X + num;
@@ -428,8 +413,7 @@ namespace Cobro
                 float num = base.X + base.transform.localScale.x * 26f;
                 float num2 = base.Y + 8.3f;
                 float num3 = base.transform.localScale.x * 750f;
-                float num4 = (float)Random.Range(-10, 10);
-                this.attachedToZipline != null;
+                float num4 = (float)UnityEngine.Random.Range(-10, 10);
                 ProjectileController.SpawnProjectileLocally(this.specialProjectile, this, num, num2, num3, num4, base.playerNum);
                 Map.DisturbWildLife(base.X, base.Y, 60f, base.playerNum);
                 this.UseSpecialAmmo();
@@ -473,10 +457,10 @@ namespace Cobro
                 num4 = 8.5f;
             }
             float num5 = base.transform.localScale.x * this.primaryAttackSpeed;
-            float num6 = (float)Random.Range(-15, 15);
+            float num6 = (float)UnityEngine.Random.Range(-15, 15);
             this.gunFrame = 3;
             this.SetGunSprite(this.gunFrame, 0);
-            ProjectileController.SpawnProjectileLocally(this.primaryProjectile, this, base.X + num, base.Y + num2, num5, num6 - 10f + Random.value * 35f, base.playerNum).life = this.primaryProjectileLifetime;
+            ProjectileController.SpawnProjectileLocally(this.primaryProjectile, this, base.X + num, base.Y + num2, num5, num6 - 10f + UnityEngine.Random.value * 35f, base.playerNum).life = this.primaryProjectileLifetime;
             EffectsController.CreateMuzzleFlashEffect(base.X + num3, base.Y + num4, -21f, num5 * 0.15f, num6 * 0.15f, base.transform);
             Sound.GetInstance().PlaySoundEffectAt(Cobro.MachineGunSounds, 0.6f, base.transform.position, 0.85f + this.pitchShiftAmount, true, false, false, 0f);
         }
@@ -498,7 +482,101 @@ namespace Cobro
                 }
             }
         }
-        
+
+        protected override void PressHighFiveMelee(bool forceHighFive = false)
+        {
+            if (this.health <= 0)
+            {
+                return;
+            }
+
+            if (this.MustIgnoreHighFiveMeleePress())
+            {
+                return;
+            }
+
+            this.SetGestureAnimation(GestureElement.Gestures.None);
+            Grenade nearbyGrenade = Map.GetNearbyGrenade(20f, base.X, base.Y + this.waistHeight);
+            this.FindNearbyMook();
+            TeleportDoor nearbyTeleportDoor = Map.GetNearbyTeleportDoor(base.X, base.Y);
+            if (nearbyTeleportDoor != null && this.CanUseSwitch() && nearbyTeleportDoor.Activate(this))
+            {
+                return;
+            }
+
+            Switch nearbySwitch = Map.GetNearbySwitch(base.X, base.Y);
+            if (GameModeController.IsDeathMatchMode || GameModeController.GameMode == GameMode.BroDown)
+            {
+                if (nearbySwitch != null && this.CanUseSwitch())
+                {
+                    nearbySwitch.Activate(this);
+                }
+                else
+                {
+                    bool flag = false;
+                    for (int i = -1; i < 4; i++)
+                    {
+                        if (i != base.playerNum && Map.IsUnitNearby(i, base.X + base.transform.localScale.x * 16f,
+                                base.Y + 8f, 28f, 14f, true, out this.meleeChosenUnit))
+                        {
+                            this.StartMelee();
+                            flag = true;
+                        }
+                    }
+
+                    if (!flag && nearbySwitch != null && this.CanUseSwitch())
+                    {
+                        nearbySwitch.Activate(this);
+                    }
+                }
+            }
+            // Don't allow throwing can continuously
+            if (nearbyGrenade != null && (!(nearbyGrenade is CoorsCan can) || can.lastThrownCooldown <= 0f))
+            {
+                this.doingMelee = (this.dashingMelee = false);
+                this.ThrowBackGrenade(nearbyGrenade);
+            }
+            else if (!GameModeController.IsDeathMatchMode || !this.doingMelee)
+            {
+                if (Map.IsCitizenNearby(base.X, base.Y, 32, 32))
+                {
+                    if (!this.doingMelee)
+                    {
+                        this.StartHighFive();
+                    }
+                }
+                else if (forceHighFive && !this.doingMelee)
+                {
+                    this.StartHighFive();
+                }
+                else if (nearbySwitch != null && this.CanUseSwitch())
+                {
+                    nearbySwitch.Activate(this);
+                }
+                else if (this.meleeChosenUnit == null && Map.IsUnitNearby(-1,
+                             base.X + base.transform.localScale.x * 16f, base.Y + 8f, 28f, 14f, false,
+                             out this.meleeChosenUnit))
+                {
+                    this.StartMelee();
+                }
+                else if (this.CheckBustCage())
+                {
+                    this.StartMelee();
+                }
+                else if (HeroController.IsAnotherPlayerNearby(base.playerNum, base.X, base.Y, 32f, 32f))
+                {
+                    if (!this.doingMelee)
+                    {
+                        this.StartHighFive();
+                    }
+                }
+                else
+                {
+                    this.StartMelee();
+                }
+            }
+        }
+
         protected override void StartCustomMelee()
         {
             if (this.wallClimbing || this.wallDrag || this.jumpingMelee)
@@ -584,7 +662,7 @@ namespace Cobro
                 this.dashingMelee = false;
                 return;
             }
-            if (base.actionState == 3 || base.Y > this.groundHeight + 1f)
+            if (base.actionState == (ActionState)3 || base.Y > this.groundHeight + 1f)
             {
                 this.standingMelee = false;
                 this.jumpingMelee = true;
@@ -605,7 +683,7 @@ namespace Cobro
         
         protected override void AnimateMelee()
         {
-            if ((this.wallClimbing || this.wallDrag || base.actionState == 3) && base.actionState != 6)
+            if ((this.wallClimbing || this.wallDrag || base.actionState == (ActionState)3) && base.actionState != (ActionState)6)
             {
                 this.CancelMelee();
                 return;
@@ -679,13 +757,13 @@ namespace Cobro
         
         protected override bool MustIgnoreHighFiveMeleePress()
         {
-            return this.heldGrenade != null || this.heldMook != null || this.usingSpecial || this.attachedToZipline || this.jumpingMelee || base.actionState == 3 || this.doingMelee;
+            return this.heldGrenade != null || this.heldMook != null || this.usingSpecial || this.attachedToZipline || this.jumpingMelee || base.actionState == (ActionState)3 || this.doingMelee;
         }
         
         protected override void PerformKnifeMeleeAttack(bool shouldTryHitTerrain, bool playMissSound)
         {
             bool flag;
-            Map.DamageDoodads(3, 14, base.X + (float)(base.Direction * 4), base.Y, 0f, 0f, 6f, base.playerNum, ref flag, null);
+            Map.DamageDoodads(3, (DamageType)14, base.X + (float)(base.Direction * 4), base.Y, 0f, 0f, 6f, base.playerNum, out flag, null);
             base.KickDoors(24f);
             AudioClip audioClip;
             if (this.gunSprite.meshRender.material == this.normalGunMaterial)
@@ -696,7 +774,7 @@ namespace Cobro
             {
                 audioClip = Cobro.DashingMeleeSounds[1];
             }
-            if (Map.HitClosestUnit(this, base.playerNum, 4, 14, 14f, 24f, base.X + base.transform.localScale.x * 8f, base.Y + 8f, base.transform.localScale.x * 200f, 500f, true, false, base.IsMine, false, true))
+            if (Map.HitClosestUnit(this, base.playerNum, 4, (DamageType)14, 14f, 24f, base.X + base.transform.localScale.x * 8f, base.Y + 8f, base.transform.localScale.x * 200f, 500f, true, false, base.IsMine, false, true))
             {
                 if (audioClip != null)
                 {
@@ -717,7 +795,7 @@ namespace Cobro
 
         protected override bool TryMeleeTerrain(int offset = 0, int meleeDamage = 2)
         {
-            if (!Physics.Raycast(new Vector3(base.X - base.transform.localScale.x * 4f, base.Y + 4f, 0f), new Vector3(base.transform.localScale.x, 0f, 0f), ref this.raycastHit, (float)(16 + offset), this.groundLayer))
+            if (!Physics.Raycast(new Vector3(base.X - base.transform.localScale.x * 4f, base.Y + 4f, 0f), new Vector3(base.transform.localScale.x, 0f, 0f), out this.raycastHit, (float)(16 + offset), this.groundLayer))
             {
                 return false;
             }
@@ -728,10 +806,10 @@ namespace Cobro
             }
             if (component != null)
             {
-                MapController.Damage_Networked(this, this.raycastHit.collider.gameObject, component.health, 7, 0f, 40f, this.raycastHit.point.x, this.raycastHit.point.y);
+                MapController.Damage_Networked(this, this.raycastHit.collider.gameObject, component.health, (DamageType)7, 0f, 40f, this.raycastHit.point.x, this.raycastHit.point.y);
                 return true;
             }
-            MapController.Damage_Networked(this, this.raycastHit.collider.gameObject, meleeDamage, 7, 0f, 40f, this.raycastHit.point.x, this.raycastHit.point.y);
+            MapController.Damage_Networked(this, this.raycastHit.collider.gameObject, meleeDamage, (DamageType)7, 0f, 40f, this.raycastHit.point.x, this.raycastHit.point.y);
             if (this.currentMeleeType == null)
             {
                 this.sound.PlaySoundEffectAt(this.soundHolder.alternateMeleeHitSound, 0.3f, base.transform.position, 1f, true, false, false, 0f);

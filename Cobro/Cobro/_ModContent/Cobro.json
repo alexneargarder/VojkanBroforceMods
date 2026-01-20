@@ -9,7 +9,9 @@
     {
       "x": 0,
       "y": 0
-    }
+    },
+    "Sprite": "sprite.png",
+    "GunSprite": "gunSprite.png"  
   },
   "cutscene": {
     "heading": "Cobro",
@@ -23,6 +25,7 @@
      "height": 278
     },
     "spritePath": "cutscene.png",
+    "barkPath": "sounds/Cobro.wav",
     "anim": "Intro_Bro_Bronan",
     "playCutsceneOnFirstSpawn": true
   },
@@ -32,12 +35,8 @@
     "canChimneyFlip": true,
     "originalSpecialAmmo": 6
   },
-  "afterAwake": {},
-  "beforeStart": {
-    "sprite": "sprite.png",
-    "gunSprite": "gunSprite.png"  
-  },
-  "afterStart": {
-    
+    "unlockConfig": {
+    "method": "RescueCount",
+    "RescueCountRequired": 5
   }
 }
