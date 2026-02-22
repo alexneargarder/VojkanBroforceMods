@@ -6,15 +6,7 @@ using BroMakerLib.Loggers;
 using System.IO;
 using System.Reflection;
 using UnityEngine;
-using Effects;
-using System.Net;
-using HarmonyLib;
-using Rogueforce;
-using Newtonsoft.Json;
-using System.Security.Policy;
-using System.Text.RegularExpressions;
 using System.Collections;
-using static Rewired.ComponentControls.Effects.RotateAroundAxis;
 
 
 namespace JackBroton
@@ -50,6 +42,7 @@ namespace JackBroton
         protected bool specialActive = false;
         private int usingSpecialFrame = 0;
         private bool specialSoundPlayed = false;
+        public AudioSource specialAudioSource;
 
         private float specialAnimationTimer = 0f;
         private bool isReversingSpecial = false;
@@ -90,15 +83,12 @@ namespace JackBroton
 
         private Color defaultTintColor;
 
-        private bool hasPlayedInvulSound;
-
         private bool soundPlayed = false;
 
         private int lastQuestionIndex = -1;
        
         BootKnife bootknifePrefab;
-
-
+        
         private List<int> questionPool;
         protected bool wallMelee;
         private bool _invulCoroutineStarted;
@@ -131,17 +121,11 @@ namespace JackBroton
             this.normalAvatarMaterial = ResourcesController.GetMaterial(directoryName, "avatar.png");
         }
 
-        public static void PreloadSprites(string directoryPath, List<string> spriteNames)
+        public override void AfterPrefabSetup()
         {
-            foreach (var spriteName in spriteNames)
-            {
-                string spritePath = Path.Combine(directoryPath, spriteName);
-                if (File.Exists(spritePath))
-                {
-                    string directoryName = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-                    ResourcesController.GetMaterial(directoryName, "BootKnife.png");
-                }
-            }
+            base.AfterPrefabSetup();
+            
+            specialAudioSource = gameObject.AddComponent<AudioSource>();
         }
 
         private void InitializeAudioClips()
@@ -405,10 +389,11 @@ namespace JackBroton
             }
 
             specialStartAmmo = SpecialAmmo;
-            hasPlayedInvulSound = false; //3005
 
             if (CanUseSpecial())
             {
+                this.ResetSpecialState();
+                
                 preDecrementAmmo = SpecialAmmo;
 
                 UseSpecialAmmo();
@@ -416,23 +401,10 @@ namespace JackBroton
                 usingSpecial = true;
                 specialAnimationTimer = 0f;
                 hasThrownProjectile = false;
-
+                
                 if (preDecrementAmmo > 1)
                 {
-                    int idx = UnityEngine.Random.Range(0, BootKnifeSounds.Length);
-                    var src = Sound.GetInstance().PlaySoundEffectAt(
-                        BootKnifeSounds[idx],
-                        0.45f, //0.6f bilo
-                        transform.position,
-                        1f + this.pitchShiftAmount,
-                        true, false, false, 0f
-                    );
-
-                    src.rolloffMode = AudioRolloffMode.Linear;
-                    src.minDistance = 550f;
-                    src.maxDistance = 600f;
-                    src.spatialBlend = 1f;
-                    src.dopplerLevel = 0f;
+                    this.PlaySpecialSound();
                 }
 
                 if (specialStartAmmo == 1)
@@ -469,40 +441,16 @@ namespace JackBroton
                     startRow = 15;
                     startColumn = 4;
                     endFrame = 12;  
-                    actionFrame = 9;    
-                                       
-                    if (!specialSoundPlayed)
-                    {
-                        int idx = UnityEngine.Random.Range(0, BootKnifeSounds.Length);
-                        Sound.GetInstance().PlaySoundEffectAt(
-                            BootKnifeSounds[idx],
-                            0.45f,
-                            transform.position,
-                            1f + this.pitchShiftAmount,
-                            true, false, false, 0f
-                        );
-                        specialSoundPlayed = true;
-                    }
+                    actionFrame = 9;
                 }
                 else
                 {
                     startRow = 16;
                     startColumn = 17;
                     endFrame = 14;  
-                    actionFrame = 8;   
-                                        
-                    if (!specialSoundPlayed)
-                    {
-                        Sound.GetInstance().PlaySoundEffectAt(
-                            JackBroton.InvulSounds[0],
-                            0.45f,
-                            transform.position,
-                            1f + this.pitchShiftAmount,
-                            true, false, false, 0f
-                        );
-                        specialSoundPlayed = true;
-                    }
+                    actionFrame = 8;
                 }
+                this.PlaySpecialSound();
 
                 specialAnimationTimer += Time.deltaTime;
                 currentFrame = Mathf.Clamp((int)(specialAnimationTimer / frameRate), 0, endFrame);
@@ -560,17 +508,9 @@ namespace JackBroton
             this.sprite.SetLowerLeftPixel((startColumn + currentFrame) * this.spritePixelWidth, startRow * this.spritePixelHeight);
 
             if (preDecrementAmmo == 1
-                && currentFrame == actionFrame
-                && !hasPlayedInvulSound)
+                && currentFrame == actionFrame )
             {
-                Sound.GetInstance().PlaySoundEffectAt(
-                    JackBroton.InvulSounds[0],
-                    0.45f,
-                    transform.position,
-                    1f + this.pitchShiftAmount,
-                    true, false, false, 0f
-                );
-                hasPlayedInvulSound = true;
+                this.PlaySpecialSound(true);
             }
 
             if (currentFrame >= actionFrame && !hasThrownProjectile)
@@ -586,7 +526,6 @@ namespace JackBroton
                     this.invulnerable = true;
                     base.invulnerableTime = 7.5f;
                     ColorShiftController.SlowTimeEffect(invulnerabilityTime);
-
                 }
 
                 hasThrownProjectile = true;
@@ -614,6 +553,40 @@ namespace JackBroton
                 this.invulnerable = false;
             }
 
+        }
+
+        public void PlaySpecialSound( bool invulSounds = false )
+        {
+            if (!specialSoundPlayed)
+            {
+                if (invulSounds)
+                {
+                    Sound.GetInstance().PlaySoundEffectAt(
+                        JackBroton.InvulSounds[0],
+                        0.45f,
+                        transform.position,
+                        1f + this.pitchShiftAmount,
+                        true, false, false, 0f
+                    );
+                }
+                else
+                {
+                    int idx = UnityEngine.Random.Range(0, BootKnifeSounds.Length);
+                    specialAudioSource.clip = BootKnifeSounds[idx];
+                    specialAudioSource.Stop();
+                    specialAudioSource.time = 0f;
+                    specialAudioSource.volume = 0.45f;
+                    specialAudioSource.pitch = 1f + pitchShiftAmount;
+                    specialAudioSource.bypassReverbZones = true;
+                    specialAudioSource.rolloffMode = AudioRolloffMode.Linear;
+                    specialAudioSource.minDistance = 550f;
+                    specialAudioSource.maxDistance = 600f;
+                    specialAudioSource.spatialBlend = 1f;
+                    specialAudioSource.dopplerLevel = 0f;
+                    specialAudioSource.Play();
+                }
+                specialSoundPlayed = true;
+            }
         }
         public override void Damage(int damage, DamageType damageType, float xI, float yI, int direction, MonoBehaviour damageSender, float hitX, float hitY)
         {
@@ -650,8 +623,6 @@ namespace JackBroton
             specialActive = false;
             this.hasThrownProjectile = false;
             specialSoundPlayed = false;
-            hasPlayedInvulSound = false;
-            //this.ActivateGun();
         }
         protected override void SetGunPosition(float xOffset, float yOffset)
         {

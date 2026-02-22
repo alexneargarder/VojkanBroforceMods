@@ -5,7 +5,7 @@
     "BetterAnimation": true,
     "SpecialIcons": [
       "special.png",
-      "special1.png",
+      "special2.png",
       "special2.png"
     ],
     "Avatar": "avatar.png",
@@ -13,7 +13,9 @@
     {
       "x": 0,
       "y": 0
-    }
+    },
+    "Sprite": "sprite.png",
+    "GunSprite": "gunSprite.png"
   },
   "cutscene": {
     "heading": "Jack Broton",
@@ -27,6 +29,7 @@
      "height": 276
     },
     "spritePath": "cutscene.png",
+    "barkPath": "sounds/Jack Broton.wav",
     "anim": "Intro_Bro_Brochete",
     "playCutsceneOnFirstSpawn": true
   },
@@ -36,13 +39,8 @@
     "canChimneyFlip": true,
     "originalSpecialAmmo": 3
   },
-  "afterAwake": {},
-  "beforeStart": {
-    "sprite": "sprite.png",
-    "gunSprite": "gunSprite.png",
-    
-  },
-  "afterStart": {
-    
+  "unlockConfig": {
+    "method": "RescueCount",
+    "RescueCountRequired": 5
   }
 }
