@@ -366,3 +366,5 @@ SOURCE_Cobro BACKUP*/
 
 # Jetbrains
 .idea/
+
+LocalBroforcePath.props
